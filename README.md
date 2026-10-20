@@ -1,10 +1,21 @@
 # selflift-Avatar
 
-**Development: `main` (tiling stale-reference fix)** · **Packaged release: `v0.1.4-experimental`** · [中文说明](README_CN.md) · [Changelog](CHANGELOG.md) · [v0.1.4 release](https://github.com/slmonker/selflift-Avatar/releases/tag/v0.1.4-experimental)
+**Maintained fork:** [terry-xu-2077/selflift-Avatar](https://github.com/terry-xu-2077/selflift-Avatar) · **Branch:** `main` · [中文说明](README_CN.md) · [Changelog](CHANGELOG.md) · [Upstream](https://github.com/slmonker/selflift-Avatar)
 
 An independent experimental SelfLift branch for ComfyUI / MiniMax H3. It focuses on H3 audio-video latent masks, preserving source audio during sampling, and a narrowly supported high-resolution tiling path. It registers separate node IDs, so it can coexist with the original SelfLift plugin.
 
-> **Experimental, unofficial project.** The current code has passed 57 CPU tests and two frontend suites with stubs. Earlier versions were exercised in the maintainer's H3 workflow; the new controls still need broader real-model and frontend testing. This is not a systematic benchmark of lip-sync accuracy, speed, or every model/plugin combination. Results can vary by character, audio, prompt, sampler, latent upscaler, and seed.
+> **Experimental, unofficial project.** This maintained fork has passed 60 CPU tests and the three-run GPU stability check described below. This does not establish lip-sync accuracy or compatibility with every model/plugin combination. Historical validation notes below describe their original releases.
+
+## Maintained fork — 2026-10-20
+
+This fork is maintained independently by Terry. It starts from `slmonker/selflift-Avatar` commit `dc8e545601e3460bde6260c806c6893ce04597c5`; the original source credits and licensing notes remain below. Upstream updates are reviewed and incorporated selectively.
+
+- Fix tiled conditioning when keyframes and reference images are present together.
+- Reserve the external H3 upscaler's workspace, fully load it through a native non-dynamic ModelPatcher, and unload it after use or on failure. No extra workflow node is required.
+- 60 CPU tests pass (58 sampler/tiling tests plus 2 upscaler cleanup tests). Three consecutive RTX 3090 runs without restarting ComfyUI took **31m45s / 31m38s / 31m24s**; adjacent differences were **7.030s / 14.105s**. Only the seed changed among generation parameters.
+- [Validation configuration and limits](docs/STABILITY_2026-10-20.md). The GPU benchmark covers the documented single-model workflow; broader lip-sync, dual-model and image-quality comparisons remain separate work.
+
+Install or update from **this fork** using the commands below. The upstream `v0.1.4-experimental` archives linked in the historical sections do not contain these maintenance fixes.
 
 ## Main-branch fix: expired model references during tiling (2026-10-09)
 
@@ -131,13 +142,13 @@ You need a working MiniMax H3 ComfyUI setup and the models, VAE, LoRA, and optio
 
 ### Git installation
 
-```bash
-git clone https://github.com/slmonker/selflift-Avatar.git ComfyUI/custom_nodes/selflift-Avatar
+```powershell
+git clone https://github.com/terry-xu-2077/selflift-Avatar.git ComfyUI/custom_nodes/selflift-Avatar
 ```
 
 To update an existing Git installation:
 
-```bash
+```powershell
 cd ComfyUI/custom_nodes/selflift-Avatar
 git pull --ff-only
 ```
@@ -146,7 +157,7 @@ Restart the ComfyUI backend after updating. A browser refresh alone does not rel
 
 ### ZIP installation
 
-Download the latest ZIP from the [Releases page](https://github.com/slmonker/selflift-Avatar/releases), back up the old `selflift-Avatar` folder outside `custom_nodes`, replace it with the new folder, and restart ComfyUI. Do not keep two copies of this plugin in `custom_nodes`.
+Download [this fork's main-branch ZIP](https://github.com/terry-xu-2077/selflift-Avatar/archive/refs/heads/main.zip), back up the old `selflift-Avatar` folder outside `custom_nodes`, replace it with the new folder, and restart ComfyUI. Rename the extracted folder to `selflift-Avatar` if needed. Do not keep two copies of this plugin in `custom_nodes`.
 
 The original `comfyui-SelfLift` folder can remain installed; this project uses different node IDs.
 
@@ -240,18 +251,19 @@ For a controlled comparison, keep the same model, audio clip, prompt, frame coun
 
 Run with the ComfyUI Python environment:
 
-```bash
+```powershell
 python tests/test_avatar.py
+python tests/test_upscaler_memory.py
 ```
 
 Optional frontend callback checks (Node.js, no npm packages):
 
-```bash
+```powershell
 node tests/test_tiling_ui.mjs
 node tests/test_model_input_order.mjs
 ```
 
-The current suite contains 53 CPU tests covering AV packing, H3 audio scaling, full/partial masks, constant audio SolidMask conversion, native audio conditioning, two-stage sampling, automatic tile planning, tile stitching, complete-audio forwarding to every tile, invalid masked-tiling combinations, and the unmasked tiling path. The tests do not load a large H3 checkpoint or measure final video lip-sync quality.
+The main suite contains 58 CPU tests covering AV packing, H3 audio scaling, full/partial masks, constant audio SolidMask conversion, native audio conditioning, two-stage sampling, automatic tile planning, tile stitching, complete-audio forwarding to every tile, invalid masked-tiling combinations, and the unmasked tiling path. The additional upscaler suite has 2 CPU tests for repeated-lift equality and cleanup after failure. These CPU tests do not load a large H3 checkpoint or measure final video lip-sync quality.
 
 ## Source and licensing
 

@@ -1,10 +1,21 @@
 # selflift-Avatar
 
-**开发版：`main`（分块失效引用修复）** · **已打包版本：`v0.1.4-experimental`** · [English README](README.md) · [更新记录](CHANGELOG.md) · [v0.1.4 发布页](https://github.com/slmonker/selflift-Avatar/releases/tag/v0.1.4-experimental)
+**独立维护分支：**[terry-xu-2077/selflift-Avatar](https://github.com/terry-xu-2077/selflift-Avatar) · **分支：**`main` · [English README](README.md) · [更新记录](CHANGELOG.md) · [上游项目](https://github.com/slmonker/selflift-Avatar)
 
 这是一个面向 ComfyUI / MiniMax H3 的 SelfLift 独立实验分支，重点处理 H3 音视频 latent 遮罩、采样过程中的原始音频保留，以及一个有限制的高分辨率自动分块路径。它使用独立的节点 ID，可以和原版 SelfLift 共存。
 
-> **实验版本，非官方项目。** 当前代码已通过 57 项 CPU 测试和两套模拟前端测试。此前版本已在维护者的 H3 工作流中试用；新控件仍需更多真实模型与前端测试。尚未进行系统性的口型准确率、速度和所有模型/插件组合测试。不同角色、音频、提示词、采样器、latent upscaler 和 seed 可能产生不同结果。
+> **实验版本，非官方项目。** 当前维护分支通过了 60 项 CPU 测试及下述三轮 GPU 稳定性测试；不代表已经验证口型准确率或全部模型/插件组合。下方历史章节保留各版本当时的验证记录。
+
+## 独立维护分支 — 2026-10-20
+
+本分支由 Terry 独立维护，基于 `slmonker/selflift-Avatar` 的 `dc8e545601e3460bde6260c806c6893ce04597c5` 提交。保留原项目来源及许可说明；上游更新经过检查后选择性引入，不依赖上游合并本分支的修改。
+
+- 修复关键帧与参考图同时存在时的分块条件行不一致问题。
+- 为外部 H3 latent 放大模型预留工作显存，通过原生非动态 ModelPatcher 完整加载，用完或失败后卸载；不需要新增工作流节点。
+- 60 项 CPU 测试通过（58 项采样/分块测试和 2 项放大模型清理测试）。RTX 3090 同一进程连续三轮、不重启，耗时 **31分45秒 / 31分38秒 / 31分24秒**，相邻差值 **7.030秒 / 14.105秒**；生成参数只改变种子。
+- [测试配置、结果和验证范围](docs/STABILITY_2026-10-20.md)。本次 GPU 测试覆盖记录中的单模型工作流，口型、双模型及画质对比需分别验证。
+
+请按下方命令从**本分支**安装或更新。历史章节链接的上游 `v0.1.4-experimental` 压缩包不包含上述维护修复。
 
 ## 主分支修复：高分辨率分块遇到失效模型引用时报错（2026-10-09）
 
@@ -133,13 +144,13 @@ H3 采样器新增可选参数，旧工作流保持原有默认行为。
 
 ### Git 安装
 
-```bash
-git clone https://github.com/slmonker/selflift-Avatar.git ComfyUI/custom_nodes/selflift-Avatar
+```powershell
+git clone https://github.com/terry-xu-2077/selflift-Avatar.git ComfyUI/custom_nodes/selflift-Avatar
 ```
 
 更新已有 Git 安装：
 
-```bash
+```powershell
 cd ComfyUI/custom_nodes/selflift-Avatar
 git pull --ff-only
 ```
@@ -148,7 +159,7 @@ git pull --ff-only
 
 ### ZIP 安装
 
-从 [Releases 页面](https://github.com/slmonker/selflift-Avatar/releases) 下载最新 ZIP，将旧的 `selflift-Avatar` 文件夹备份到 `custom_nodes` 之外，用新版文件夹替换后重启 ComfyUI。不要在 `custom_nodes` 中同时放置两个本插件副本。
+从[本分支的 main 压缩包](https://github.com/terry-xu-2077/selflift-Avatar/archive/refs/heads/main.zip)下载安装，将旧的 `selflift-Avatar` 文件夹备份到 `custom_nodes` 之外，用新版文件夹替换后重启 ComfyUI。解压后的文件夹可重命名为 `selflift-Avatar`，不要在 `custom_nodes` 中同时保留两个插件副本。
 
 原版 `comfyui-SelfLift` 可以保留；本项目使用不同的节点 ID。
 
@@ -242,18 +253,19 @@ H3 视频 latent ───────────────→ 合并 AV late
 
 使用 ComfyUI 对应的 Python 运行：
 
-```bash
+```powershell
 python tests/test_avatar.py
+python tests/test_upscaler_memory.py
 ```
 
 可选前端回调测试（需要 Node.js，无需安装 npm 包）：
 
-```bash
+```powershell
 node tests/test_tiling_ui.mjs
 node tests/test_model_input_order.mjs
 ```
 
-当前共有 53 项 CPU 测试，覆盖音视频打包、H3 音频尺度、全量/局部遮罩、恒定音频 SolidMask 转换、原生音频条件、两阶段采样、自动分块规划、分块拼接、每个分块获得完整音频、非法遮罩组合和无遮罩分块路径。测试不会加载大型 H3 权重，也不衡量最终视频的口型质量。
+主测试集包含 58 项 CPU 测试，覆盖音视频打包、H3 音频尺度、全量/局部遮罩、恒定音频 SolidMask 转换、原生音频条件、两阶段采样、自动分块规划、分块拼接、每个分块获得完整音频、非法遮罩组合和无遮罩分块路径。另有 2 项放大模型 CPU 测试，覆盖重复运行结果一致性和异常卸载清理。这些 CPU 测试不会加载大型 H3 权重，也不衡量最终视频的口型质量。
 
 ## 来源与许可
 

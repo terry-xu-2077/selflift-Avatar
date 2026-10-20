@@ -28,5 +28,12 @@
     "tests/test_tiling_ui.mjs": "7295a1861d622b9510a4c33aac7ce8762959e3cc7e84145935829898a0b7cb81",
     "web/model_input_order.js": "c78398633f6d768d50977a598240d82cc5f4f8883b9f76c7372d98e9aed8bd78",
     "web/tiling_controls.js": "7161108525b2f7663d7410e430c4e3f8bd020cb8cbfadd881b138b250e597373"
+  },
+  "maintenance": {
+    "repository": "https://github.com/terry-xu-2077/selflift-Avatar",
+    "parent_repository": "https://github.com/slmonker/selflift-Avatar",
+    "parent_commit": "dc8e545601e3460bde6260c806c6893ce04597c5",
+    "started": "2026-10-20",
+    "policy": "Independently maintained fork; review upstream changes selectively. Preserve original provenance and licensing notes."
   }
 }
