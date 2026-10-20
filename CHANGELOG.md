@@ -1,5 +1,12 @@
 # Changelog
 
+## Local stability fix — 2026-10-20 (not yet packaged)
+
+- Load the external H3 latent upscaler with a non-dynamic native ModelPatcher and reserve its inference workspace before fully loading its weights. Keep H3 sampling on its existing memory policy.
+- Unload the upscaler after each lift, including on failure. Log memory snapshots and separate loading/inference times without adding workflow nodes or changing the upscaling math.
+- 60 CPU tests pass, including repeated-lift output equality and failure cleanup. Three consecutive 1920×1088, 362-frame generations in one RTX 3090 process completed in 1904.985s, 1897.955s and 1883.850s; adjacent differences were 7.030s and 14.105s. Seeds were 666, 677 and 678; other generation parameters matched.
+- The upscaling stage took 13.583s, 13.262s and 13.278s. The previous 418.513s stall did not recur in these three runs; the release archive is unchanged.
+
 ## Main branch — 2026-10-09 (not yet packaged)
 
 - Fix high-resolution tiling workspace estimation crashing on `None` entries or expired wrapped model references in ComfyUI's loaded-model list.

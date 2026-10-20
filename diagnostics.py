@@ -7,13 +7,14 @@ import psutil
 import torch
 
 
-def log_memory(label, device):
-    if os.environ.get("SELFLIFT_MEMORY_LOG", "0") != "1":
+def log_memory(label, device, force=False):
+    if not force and os.environ.get("SELFLIFT_MEMORY_LOG", "0") != "1":
         return
     device = torch.device(device)
     fields = []
     try:
-        fields.append(f"process_rss={psutil.Process().memory_info().rss / 2**20:.2f} MiB")
+        memory = psutil.Process().memory_info()
+        fields.append(f"process_rss={memory.rss / 2**20:.2f} MiB")
         fields.append(f"system_available={psutil.virtual_memory().available / 2**20:.2f} MiB")
     except (psutil.Error, OSError) as error:
         fields.append(f"host_memory_unavailable={error}")
