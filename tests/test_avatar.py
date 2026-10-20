@@ -467,6 +467,38 @@ class TilingTests(unittest.TestCase):
         torch.testing.assert_close(out[0],v)
         torch.testing.assert_close(out[1],a)
 
+    def test_keyframes_and_references_rebuild_tiled_condition_rows(self):
+        video = torch.zeros(1, 24, 3, 8, 12)
+        audio = torch.zeros(1, 32, 2, 7)
+        context = torch.zeros(1, 2, 4)
+        keyframes = [
+            {"resolved_frame_index": 0, "latent": torch.randn(1, 24, 2, 8, 12)},
+            {"resolved_frame_index": 2, "latent": torch.randn(1, 24, 1, 8, 12)},
+        ]
+        refs = [
+            {"kind": "image", "latent_h": 6, "latent_w": 10,
+             "latent": torch.randn(1, 24, 1, 6, 10)},
+            {"kind": "image", "latent_h": 4, "latent_w": 8,
+             "latent": torch.randn(1, 24, 1, 4, 8)},
+        ]
+        payload = {
+            "keyframes": keyframes,
+            "refs": refs,
+            "cond_video_latents": [item["latent"] for item in keyframes + refs],
+        }
+
+        tiled = h3_tiling._tile_payload(payload, context, video, audio, 4, 0, 8)
+
+        self.assertEqual([tuple(z.shape) for z in tiled["cond_video_latents"]], [
+            (1, 24, 2, 8, 8), (1, 24, 1, 8, 8),
+            (1, 24, 1, 6, 10), (1, 24, 1, 4, 8),
+        ])
+        condition_rows = sum(
+            z.shape[2] * ((z.shape[3] + 1) // 2) * ((z.shape[4] + 1) // 2)
+            for z in tiled["cond_video_latents"]
+        )
+        self.assertEqual(condition_rows, int((~tiled["layout"].img_update).sum()))
+
 class TilingWorkspaceTests(unittest.TestCase):
     def workspace(self, loaded, free=100, total=1000):
         model = SimpleNamespace(load_device='cuda:0', model_size=lambda: 50)
